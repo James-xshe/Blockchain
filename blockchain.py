@@ -14,6 +14,7 @@ class Blockchain:
     def __init__(self, hosting_node_id):
         genesis_block = Block('', 0, [], 100, 0)
         # Initializing empty blockchain list
+        self.chain = [genesis_block]
         self.__chain = [genesis_block]
         # Unhandled transactions
         self.__open_transactions = []
@@ -78,6 +79,8 @@ class Blockchain:
         return proof
 
     def get_balance(self):
+        if self.hosting_node == None:
+            return None
         participant = self.hosting_node
         tx_sender = [[tx.amount for tx in block.transactions if tx.sender == participant] for block in self.__chain]
         open_tx_sender = [tx.amount for tx in self.__open_transactions if tx.sender == participant]
@@ -113,7 +116,7 @@ class Blockchain:
 
     def mine_block(self):
         if self.hosting_node is None:
-            return False
+            return None
         last_block = self.__chain[-1]
         hashed_block = Blockchain.hash_block(last_block)
         proof = self.proof_of_work()
@@ -121,10 +124,10 @@ class Blockchain:
         copied_transactions = self.__open_transactions[:]
         for tx in copied_transactions:
             if not Wallet.verify_transaction(tx):
-                return False
+                return None
         copied_transactions.append(reward_transaction)
         block = Block(hashed_block, len(self.__chain), copied_transactions, proof)
         self.__chain.append(block)
         self.__open_transactions = []
         self.save_data()
-        return True
+        return block
